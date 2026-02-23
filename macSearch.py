@@ -23,17 +23,13 @@ with open(csv_file, 'r') as f:
 
 while(running):
 
-    #aps from top to 2 before the "station MAC" marker
+    #DF of aps from top to 2 before the "station MAC" marker
     data_aps = pd.read_csv(csv_file, nrows=station_line_index - 2)
+    data_aps.columns = data_aps.columns.str.strip() #remove spaces
 
-    #remove spaces
-    data_aps.columns = data_aps.columns.str.strip()
-
-    #seperate one for stations, start at "station MAC"
+    #seperate DF for stations, start at "station MAC"
     data_stations = pd.read_csv(csv_file, skiprows=station_line_index)
-
-    #remove spaces
-    data_stations.columns = data_stations.columns.str.strip()
+    data_stations.columns = data_stations.columns.str.strip() #remove spaces
 
     #grab the bssid, pwr, and essid columns and put them into a new dataframe
     aps_subset = data_aps[['BSSID', 'Power', 'ESSID']].copy()
@@ -45,8 +41,8 @@ while(running):
     sta_subset = data_stations[['Station MAC', 'Power', 'Probed ESSIDs']].copy()
     sta_subset.columns = ['MAC', 'Power', 'Name']
 
+    #create a combined dataframe
     combined_df = pd.concat([aps_subset, sta_subset], ignore_index=True)
-
 
     #strip then convert to numbers
     combined_df['Power'] = pd.to_numeric(combined_df['Power'].astype(str).str.strip(), errors='coerce')

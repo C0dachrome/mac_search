@@ -1,0 +1,5 @@
+sudo airodump-ng -w scan --write-interval 1 --output-format csv <interface>
+1.	<interface> is wifi interface IN MONITOR MODE
+2.	Run python script to identify MAC addresses that increase in power and signal integrity with proximity to transmitter.
+3.	Once a MAC is identified, replace <channel> and <MAC_ADDRESS> with identified values.
+sudo airodump-ng -c <channel> --bssid <MAC_ADDRESS> -w target --write-interval 1 <interface>
