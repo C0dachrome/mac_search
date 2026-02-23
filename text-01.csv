@@ -1,0 +1,5 @@
+BSSID, First time enabled, Last time enabled, channel, Speed, Privacy, Cipher, Authentication, Power, # beacons, # IV, LAN IP, ID-length, ESSID, Key
+ 00:11:22:33:44:55, 2023-10-27 10:00:00, 2023-10-27 10:00:05,  6,  54, WPA2, CCMP, PSK, -45, 100, 0, 0.0.0.0, 5, Dolby_Speaker, 
+
+Station MAC, First time enabled, Last time enabled, Power, # packets, BSSID, Probed ESSIDs
+ AA:BB:CC:DD:EE:FF, 2023-10-27 10:00:01, 2023-10-27 10:00:06, -60, 25, 00:11:22:33:44:55, 
