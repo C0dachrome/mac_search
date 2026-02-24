@@ -29,7 +29,7 @@ def get_data():
                     break
 
         if station_line_index is None:
-            return jsonify([])
+            data_aps = pd.read_csv(CSV_FILE)
 
         # read APs
         data_aps = pd.read_csv(CSV_FILE, nrows=station_line_index - 2)
@@ -60,7 +60,7 @@ def get_data():
 @app.route('/start_target/<channel>/<bssid>')
 def start_target(channel, bssid):
     """Kills general scan and starts a targeted capture."""
-    
+
     # Remove old target files before starting a new specific scan
     subprocess.run('sudo rm -f target_capture*', shell=True)
 
