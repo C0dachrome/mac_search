@@ -1,7 +1,7 @@
 import pandas as pd 
 
 running = True
-csv_file = 'text-01.csv'
+csv_file = 'scan-01.csv'
 pd.options.display.max_rows = 9999
 
 # Framing the program
