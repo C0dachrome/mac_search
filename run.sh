@@ -12,8 +12,7 @@ sudo airodump-ng -w scan --write-interval 1 --output-format csv "$interface"
 
 # Run Python and forward interrupts to it so Ctrl-C stops Python but keeps
 # this wrapper running. A second Ctrl-C will terminate the wrapper.
-python macSearch.py &
-child=$!
+python macSearch.py 
 
 interrupted=0
 trap_handler() {
@@ -37,7 +36,7 @@ trap_handler() {
 }
 trap 'trap_handler' INT TERM
 
-wait "$child" || true
+
 
 # Restore default handlers so further Ctrl-C behaves normally.
 trap - INT TERM
