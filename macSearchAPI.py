@@ -5,7 +5,7 @@ import os
 
 app = Flask(__name__)
 
-CSV_FILE = 'scan-01.csv'
+CSV_FILE = '/home/codyc/mac_search/scan-01.csv'
 INTERFACE = 'wlan1'
 
 @app.route('/')
