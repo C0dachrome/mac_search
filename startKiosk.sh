@@ -15,6 +15,8 @@ sudo airodump-ng -w scan --write-interval 1 --output-format csv "$interface" > /
 # Make sure the path to your script is correct!
 python3 /home/codyc/mac_search/macSearchAPI.py > /home/codyc/api.log 2>&1 &
 
+sudo chmod 666 /home/codyc/mac_search/scan-01.csv
+
 # 5. THE FAILSAFE: Wait until the port is active
 echo "Waiting for Python API to wake up..."
 while ! nc -z localhost 5000; do   
