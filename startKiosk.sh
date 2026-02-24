@@ -1,6 +1,9 @@
 #!/bin/bash
 
 interface="wlan1"
+sudo rfkill unblock all
+sleep 1
+sudo ifconfig "$interface" up
 
 # Start the Python API in the background
 python3 /home/codyc/mac_search/macSearchAPI.py > /home/codyc/api.log 2>&1 &
