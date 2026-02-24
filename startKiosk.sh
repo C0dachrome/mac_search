@@ -1,28 +1,25 @@
 #!/bin/bash
-interface="wlan1"
+# 1. Kill everything first
+sudo killall -9 python3 airodump-ng xinit 2>/dev/null
 
-# 1. Reset wireless
-sudo rfkill unblock all
-sudo ifconfig "$interface" up
+# 2. Delete ALL old scans so airodump is forced to use 'scan-01.csv'
+rm -f /home/codyc/mac_search/scan-*
 
-# 2. Kill old sessions
-sudo killall python3 airodump-ng xinit 2>/dev/null
+# 3. Put the card in Monitor Mode (Crucial for Power levels)
+sudo ifconfig wlan1 down
+sudo iw dev wlan1 set type monitor
+sudo ifconfig wlan1 up
 
-# 3. Start Airodump (Background)
-sudo airodump-ng -w scan --write-interval 1 --output-format csv "$interface" > /dev/null 2>&1 &
+# 4. Start fresh scan
+sudo airodump-ng -w /home/codyc/mac_search/scan --write-interval 1 --output-format csv wlan1 > /dev/null 2>&1 &
 
-# 4. Start Python API (Background)
-# Make sure the path to your script is correct!
+# 5. Start API
 python3 /home/codyc/mac_search/macSearchAPI.py > /home/codyc/api.log 2>&1 &
 
-sudo chmod 666 /home/codyc/mac_search/scan-01.csv
-
-# 5. THE FAILSAFE: Wait until the port is active
-echo "Waiting for Python API to wake up..."
-while ! nc -z localhost 5000; do   
-  sleep 0.5
+# 6. Wait for file to actually exist before launching browser
+while [ ! -f /home/codyc/mac_search/scan-01.csv ]; do
+  sleep 1
 done
-echo "API is live! Launching browser..."
 
-# 6. Launch Graphics
-xinit /usr/bin/chromium --kiosk --no-sandbox --app=http://localhost:5000 --user-data-dir=/home/codyc/.chrome-kiosk
+# 7. Launch Browser
+xinit /usr/bin/chromium --kiosk --no-sandbox --app=http://localhost:5000
