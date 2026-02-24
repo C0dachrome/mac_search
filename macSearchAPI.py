@@ -16,39 +16,45 @@ def index():
 @app.route('/get_data')
 def get_data():
     """parses the airodump CSV and returns the top 5 strongest signals"""
+    @app.route('/get_data')
+def get_data():
     if not os.path.exists(CSV_FILE):
         return jsonify([])
 
     try:
         station_line_index = None
-        # Locate the 'Station MAC' marker in the airodump CSV
         with open(CSV_FILE, 'r') as f:
             for i, line in enumerate(f):
                 if "Station MAC" in line:
                     station_line_index = i
                     break
 
+        # CASE 1: No Station marker found yet (Initial scan phase)
         if station_line_index is None:
             data_aps = pd.read_csv(CSV_FILE)
-
-        # read APs
-        data_aps = pd.read_csv(CSV_FILE, nrows=station_line_index - 2)
-        data_aps.columns = data_aps.columns.str.strip()
-        aps_subset = data_aps[['BSSID', 'Power', 'channel', 'ESSID']].copy()
-        aps_subset.columns = ['MAC', 'Power', 'Channel', 'Name']
-
-        # read stations
-        data_stations = pd.read_csv(CSV_FILE, skiprows=station_line_index)
-        data_stations.columns = data_stations.columns.str.strip()
-        sta_subset = data_stations[['Station MAC', 'Power', 'Probed ESSIDs']].copy()
-        sta_subset.columns = ['MAC', 'Power', 'Name']
-        sta_subset['Channel'] = "N/A" # stations dont have a channel column
-
-        # Combine and Clean
-        combined_df = pd.concat([aps_subset, sta_subset], ignore_index=True)
-        combined_df['Power'] = pd.to_numeric(combined_df['Power'].astype(str).str.strip(), errors='coerce')
+            data_aps.columns = data_aps.columns.str.strip()
+            # Only take the columns we need if they exist
+            aps_subset = data_aps[['BSSID', 'Power', 'channel', 'ESSID']].copy()
+            aps_subset.columns = ['MAC', 'Power', 'Channel', 'Name']
+            combined_df = aps_subset
         
-        # Filter out noise and sort
+        # CASE 2: Both APs and Stations are present
+        else:
+            data_aps = pd.read_csv(CSV_FILE, nrows=station_line_index - 2)
+            data_aps.columns = data_aps.columns.str.strip()
+            aps_subset = data_aps[['BSSID', 'Power', 'channel', 'ESSID']].copy()
+            aps_subset.columns = ['MAC', 'Power', 'Channel', 'Name']
+
+            data_stations = pd.read_csv(CSV_FILE, skiprows=station_line_index)
+            data_stations.columns = data_stations.columns.str.strip()
+            sta_subset = data_stations[['Station MAC', 'Power', 'Probed ESSIDs']].copy()
+            sta_subset.columns = ['MAC', 'Power', 'Name']
+            sta_subset['Channel'] = "N/A"
+            
+            combined_df = pd.concat([aps_subset, sta_subset], ignore_index=True)
+
+        # Common Cleaning Logic
+        combined_df['Power'] = pd.to_numeric(combined_df['Power'].astype(str).str.strip(), errors='coerce')
         topFive = combined_df.dropna(subset=['Power']).sort_values(by='Power', ascending=False).head(5)
 
         return jsonify(topFive.to_dict(orient='records'))
