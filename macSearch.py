@@ -17,7 +17,7 @@ looping = bool(input("Looping? (y/n): ").lower() == 'y')
 
 with open(csv_file, 'r') as f:
     for i, line in enumerate(f):
-        if "STATION" in line:
+        if "Station MAC" in line:
             station_line_index = i
             break
 
@@ -32,13 +32,13 @@ while(running):
     data_stations.columns = data_stations.columns.str.strip() #remove spaces
 
     #grab the bssid, pwr, and essid columns and put them into a new dataframe
-    aps_subset = data_aps[['BSSID', 'PWR', 'CH','ESSID']].copy()
+    aps_subset = data_aps[['BSSID', 'Power', 'channel','ESSID']].copy()
 
     #rename the columns of new dataframe for readability
     aps_subset.columns = ['MAC', 'Power', 'Channel', 'Name']
 
     #same setup just with the station MACs instead of the AP ones
-    sta_subset = data_stations[['STATION', 'PWR', 'Probed ESSIDs']].copy()
+    sta_subset = data_stations[['Station MAC', 'Power', 'Probed ESSIDs']].copy()
     sta_subset.columns = ['MAC', 'Power', 'Name']
 
     #create a combined dataframe
