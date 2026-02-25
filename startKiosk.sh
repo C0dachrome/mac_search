@@ -4,12 +4,13 @@
 sudo pkill -f macSearchAPI.py
 sudo pkill airodump-ng
 sudo pkill chromium
+sudo rfkill unblock 2
 
 # stop interference (this kills your internet)
 sudo airmon-ng check kill
 sudo airmon-ng start wlan1
 
-sudo rfkill unblock 2
+
 
 # wait for hardware
 sleep 2
