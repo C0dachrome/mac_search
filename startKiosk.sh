@@ -33,7 +33,7 @@ sleep 5
 
 # launch chromium
 export DISPLAY=:0
-sudo -u pi chromium-browser --kiosk --noerrdialogs --disable-infobars http://localhost:5000 &
+sudo -u codyc chromium --kiosk --noerrdialogs --disable-infobars http://localhost:5000 &
 
 # keep the script alive until you press ctrl+c
 echo "auditor is running. press ctrl+c to stop and restore internet."
