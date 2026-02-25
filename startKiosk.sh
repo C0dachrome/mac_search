@@ -31,5 +31,8 @@ sudo python3 macSearchAPI.py &
 # wait for server to warm up
 sleep 5
 
-# launch chromium with root bypass flags
-chromium --kiosk --no-sandbox --user-data-dir=/root/chrome-profile --noerrdialogs --disable-infobars http://localhost:5000
+# tell chromium which screen to use
+export DISPLAY=:0
+
+# launch chromium as the pi user to avoid sandbox/root errors
+sudo -u pi chromium-browser --kiosk --noerrdialogs --disable-infobars http://localhost:5000 &
