@@ -9,7 +9,8 @@ app = Quart(__name__)
 app = cors(app, allow_origin="*")
 
 INTERFACE = 'wlan1'
-CSV_FILE = '/tmp/scan-01.csv'
+CSV_FILE = '/dev/shm/scan-01.csv'
+
 TARGET_MAC = None
 
 def parse_csv():
@@ -61,15 +62,58 @@ async def get_data():
 async def start_target(ch, mac):
     global TARGET_MAC
     TARGET_MAC = mac.upper()
+
+    subprocess.run(["sudo", "pkill", "airodump-ng"])
+    cmd = [
+        "sudo", 
+        "airodump-ng", 
+        INTERFACE, 
+        "-c", 
+        ch, 
+        "--bssid", 
+        mac, 
+        "-w", 
+        "/dev/shm/scan", 
+        "--output-format", 
+        "csv", 
+        "--write-interval", 
+        "1"
+    ]
+
+    subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
     return jsonify({"status": "tracking", "mac": mac})
+
+def start_general_scan():
+
+    subprocess.run(["sudo", "pkill", "airodump-ng"])
+
+    cmd = [
+        "sudo",
+        "airodump-ng", 
+        INTERFACE, 
+        "-w", 
+        "/dev/shm/scan", 
+        "--output-format", 
+        "csv", 
+        "--write-interval", 
+        "1"
+    ]
+
+    subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+@app.route('/stop_target')
+async def stop_target():
+    global TARGET_MAC
+    TARGET_MAC = None
+    start_general_scan()
+    return jsonify({"status": "resumed_general_scan"})
 
 @app.before_serving
 async def startup():
-    if os.path.exists('/tmp/scan-01.csv'):
-        os.remove('/tmp/scan-01.csv')
-    
-    cmd = ["sudo", "airodump-ng", INTERFACE, "-w", "/tmp/scan", "--output-format", "csv"]
-    subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    if os.path.exists('/dev/shm/scan-01.csv'):
+        os.remove('/dev/shm/scan-01.csv')
+    start_general_scan()
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
