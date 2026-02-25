@@ -1,25 +1,28 @@
 #!/bin/bash
-# 1. Kill everything first
-sudo killall -9 python3 airodump-ng xinit 2>/dev/null
 
-# 2. Delete ALL old scans so airodump is forced to use 'scan-01.csv'
-rm -f /home/codyc/mac_search/scan-*
+# kill old processes
+sudo pkill -f macSearchAPI.py
+sudo pkill airodump-ng
 
-# 3. Put the card in Monitor Mode (Crucial for Power levels)
-sudo ifconfig wlan1 down
-sudo iw dev wlan1 set type monitor
-sudo ifconfig wlan1 up
+# stop interference and start monitor mode
+sudo airmon-ng check kill
+sudo airmon-ng start wlan1
 
-# 4. Start fresh scan
-sudo airodump-ng -w /home/codyc/mac_search/scan --write-interval 1 --output-format csv wlan1 > /dev/null 2>&1 &
+# wait for hardware
+sleep 2
 
-# 5. Start API
-python3 /home/codyc/mac_search/macSearchAPI.py > /home/codyc/api.log 2>&1 &
+# force interface up
+if ip link show wlan1mon > /dev/null 2>&1; then
+    sudo ip link set wlan1mon up
+    interface="wlan1mon"
+else
+    sudo ip link set wlan1 up
+    interface="wlan1"
+fi
 
-# 6. Wait for file to actually exist before launching browser
-while [ ! -f /home/codyc/mac_search/scan-01.csv ]; do
-  sleep 1
-done
+# clear old scan data from ram
+sudo rm -rf /dev/shm/scan*
 
-# 7. Launch Browser
-xinit /usr/bin/chromium --kiosk --no-sandbox --app=http://localhost:5000
+# launch server
+echo "starting auditor on $interface"
+sudo python3 macSearchAPI.py
