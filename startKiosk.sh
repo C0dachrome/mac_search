@@ -32,7 +32,7 @@ sudo rm -rf /dev/shm/scan*
 
 # launch server in background
 echo "starting auditor on $interface"
-sudo python3 macSearchAPI.py &
+sudo python3 ~/mac_search/macSearchAPI.py &
 
 # wait for server to warm up
 sleep 5
