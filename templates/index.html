@@ -1,95 +1,93 @@
 <!DOCTYPE html>
 <html>
-
 <head>
-    <title>Theater Wi-Fi Auditor</title>
+    <title>Auditor</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        body {
-            font-family: sans-serif;
-            background: #111;
-            color: white;
-            padding: 20px;
-        }
-
-        .device-row {
-            background: #222;
-            margin: 10px 0;
-            padding: 20px;
-            border-radius: 8px;
-            border-left: 10px solid #444;
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .pwr-high {
-            border-left-color: #00ff00;
-        }
-
-        /* Strong signal */
-        button {
-            background: #007bff;
-            color: white;
-            border: none;
-            padding: 15px;
-            border-radius: 5px;
-        }
+        body { font-family: sans-serif; background: #000; color: #fff; padding: 10px; margin: 0; }
+        .device-row { background: #111; margin-bottom: 10px; padding: 15px; border-radius: 8px; border-left: 6px solid #444; }
+        .pwr-high { border-left-color: #00ff00; }
+        .target-mode { text-align: center; padding: 30px 10px; }
+        .bar-container { background: #333; height: 50px; border-radius: 25px; margin: 20px 0; overflow: hidden; border: 2px solid #555; }
+        .bar-fill { background: linear-gradient(to right, #ff0000, #ffff00, #00ff00); height: 100%; transition: width 0.3s; }
+        .dbm-display { font-size: 4rem; font-weight: bold; margin: 10px 0; }
+        button { background: #007bff; color: #fff; border: none; padding: 12px 20px; border-radius: 5px; font-weight: bold; }
+        .stop-btn { background: #cc0000; margin-top: 30px; width: 100%; }
+        .mac { font-family: monospace; color: #777; font-size: 0.9rem; }
     </style>
 </head>
-
 <body>
-    <h1>Top 5 Devices</h1>
-    <div id="data-container"></div>
+    <div id="app">
+        <h2 id="header">Nearby Signals</h2>
+        <div id="container"></div>
+    </div>
 
     <script>
-        function updateData() {
-            fetch('/get_data')
-                .then(response => response.json())
-                .then(data => {
-                    const container = document.getElementById('data-container');
-                    container.innerHTML = '';
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-                    if (data.length === 0) {
-                        container.innerHTML = '<p style="color: #666;">Waiting for scan data...</p>';
-                        return;
-                    }
+        function click(power) {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.frequency.value = 800;
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.05);
+        }
 
-                    data.forEach(item => {
-                        const div = document.createElement('div');
-                        // Check if Power is high (closer to 0 is stronger, e.g., -30 > -50)
-                        const isHigh = item.Power && item.Power > -50;
-                        div.className = `device-row ${isHigh ? 'pwr-high' : ''}`;
+        async function update() {
+            try {
+                const res = await fetch('/get_data');
+                const data = await res.json();
+                const container = document.getElementById('container');
+                const header = document.getElementById('header');
+                
+                if (data.length === 1 && data[0].IsTarget) {
+                    const item = data[0];
+                    header.style.display = 'none';
+                    let strength = Math.min(Math.max((parseInt(item.Power) + 100) * 1.4, 0), 100);
+                    
+                    if (strength > 70) click(item.Power);
 
-                        div.innerHTML = `
-                        <div>
-                            <strong>${item.Name || 'Unknown'}</strong><br>
-                            <small>${item.MAC}</small>
-                        </div>
-                        <div>
-                            <span>${item.Power || '??'} dBm</span>
-                            <button onclick="startTarget('${item.Channel}', '${item.MAC}')">Target</button>
+                    container.innerHTML = `
+                        <div class="target-mode">
+                            <div style="color:#00ff00">TRACKING: ${item.Name}</div>
+                            <div class="dbm-display">${item.Power}</div>
+                            <div class="bar-container">
+                                <div class="bar-fill" style="width: ${strength}%"></div>
+                            </div>
+                            <div class="mac">${item.MAC}</div>
+                            <button class="stop-btn" onclick="location.reload()">STOP SCAN</button>
                         </div>
                     `;
-                        container.appendChild(div);
-                    });
-                })
-                .catch(err => console.error("Error fetching data:", err));
+                } else {
+                    header.style.display = 'block';
+                    container.innerHTML = data.map(item => `
+                        <div class="device-row ${item.Power > -50 ? 'pwr-high' : ''}">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <div>
+                                    <strong>${item.Name}</strong><br>
+                                    <span class="mac">${item.MAC}</span>
+                                </div>
+                                <div style="text-align:right">
+                                    <div style="font-size:1.2rem; font-weight:bold">${item.Power} dBm</div>
+                                    <button onclick="startTarget('${item.Channel}','${item.MAC}')">TARGET</button>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            } catch (e) {}
         }
 
         function startTarget(ch, mac) {
-            // Encode the MAC to handle any special characters
-            const url = `/start_target/${encodeURIComponent(ch)}/${encodeURIComponent(mac)}`;
-            fetch(url)
-                .then(r => r.json())
-                .then(res => alert(res.message))
-                .catch(err => alert("Failed to start target: " + err));
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            fetch(`/start_target/${ch}/${mac}`);
         }
 
-        // RUN IMMEDIATELY ON LOAD
-        updateData();
-        // THEN REPEAT
-        setInterval(updateData, 2000); 
+        setInterval(update, 1000);
     </script>
 </body>
-
 </html>
