@@ -5,7 +5,7 @@ sudo pkill -f macSearchAPI.py
 sudo pkill airodump-ng
 sudo pkill chromium
 
-# stop interference and start monitor mode
+# stop interference (this kills your internet)
 sudo airmon-ng check kill
 sudo airmon-ng start wlan1
 
@@ -31,8 +31,11 @@ sudo python3 macSearchAPI.py &
 # wait for server to warm up
 sleep 5
 
-# tell chromium which screen to use
+# launch chromium
 export DISPLAY=:0
-
-# launch chromium as the pi user to avoid sandbox/root errors
 sudo -u pi chromium-browser --kiosk --noerrdialogs --disable-infobars http://localhost:5000 &
+
+# keep the script alive until you press ctrl+c
+echo "auditor is running. press ctrl+c to stop and restore internet."
+trap "sudo systemctl start NetworkManager; sudo airmon-ng stop $interface; exit" INT
+wait
