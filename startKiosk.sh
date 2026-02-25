@@ -3,6 +3,7 @@
 # kill old processes
 sudo pkill -f macSearchAPI.py
 sudo pkill airodump-ng
+sudo pkill chromium
 
 # stop interference and start monitor mode
 sudo airmon-ng check kill
@@ -23,6 +24,12 @@ fi
 # clear old scan data from ram
 sudo rm -rf /dev/shm/scan*
 
-# launch server
+# launch server in background
 echo "starting auditor on $interface"
-sudo python3 macSearchAPI.py
+sudo python3 macSearchAPI.py &
+
+# wait for server to warm up
+sleep 5
+
+# launch chromium in kiosk mode
+chromium-browser --kiosk --noerrdialogs --disable-infobars http://localhost:5000
