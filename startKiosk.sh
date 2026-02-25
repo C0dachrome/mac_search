@@ -1,5 +1,8 @@
 #!/bin/bash
 
+
+sudo airmon-ng check kill
+
 # kill old processes
 sudo pkill -f macSearchAPI.py
 sudo pkill airodump-ng
