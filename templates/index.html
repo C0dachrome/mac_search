@@ -1,79 +1,21 @@
 <!DOCTYPE html>
 <html>
-
 <head>
     <title>Auditor</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        body {
-            font-family: sans-serif;
-            background: #000;
-            color: #fff;
-            padding: 10px;
-            margin: 0;
-        }
-
-        .device-row {
-            background: #111;
-            margin-bottom: 10px;
-            padding: 15px;
-            border-radius: 8px;
-            border-left: 6px solid #444;
-        }
-
-        .pwr-high {
-            border-left-color: #00ff00;
-        }
-
-        .target-mode {
-            text-align: center;
-            padding: 30px 10px;
-        }
-
-        .bar-container {
-            background: #333;
-            height: 50px;
-            border-radius: 25px;
-            margin: 20px 0;
-            overflow: hidden;
-            border: 2px solid #555;
-        }
-
-        .bar-fill {
-            background: linear-gradient(to right, #ff0000, #ffff00, #00ff00);
-            height: 100%;
-            transition: width 0.3s;
-        }
-
-        .dbm-display {
-            font-size: 4rem;
-            font-weight: bold;
-            margin: 10px 0;
-        }
-
-        button {
-            background: #007bff;
-            color: #fff;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 5px;
-            font-weight: bold;
-        }
-
-        .stop-btn {
-            background: #cc0000;
-            margin-top: 30px;
-            width: 100%;
-        }
-
-        .mac {
-            font-family: monospace;
-            color: #777;
-            font-size: 0.9rem;
-        }
+        body { font-family: sans-serif; background: #000; color: #fff; padding: 10px; margin: 0; overflow-x: hidden; }
+        .device-row { background: #111; margin-bottom: 10px; padding: 15px; border-radius: 8px; border-left: 6px solid #444; }
+        .pwr-high { border-left-color: #00ff00; }
+        .target-mode { text-align: center; padding: 20px 5px; }
+        .bar-container { background: #222; height: 60px; border-radius: 30px; margin: 20px 0; overflow: hidden; border: 2px solid #444; }
+        .bar-fill { background: linear-gradient(to right, #f00, #ff0, #0f0); height: 100%; transition: width 0.2s; }
+        .dbm-display { font-size: 5rem; font-weight: bold; margin: 0; color: #007bff; }
+        button { background: #007bff; color: #fff; border: none; padding: 15px 25px; border-radius: 8px; font-weight: bold; font-size: 1rem; }
+        .stop-btn { background: #d00; width: 100%; margin-top: 20px; }
+        .mac { font-family: monospace; color: #666; font-size: 0.8rem; }
     </style>
 </head>
-
 <body>
     <div id="app">
         <h2 id="header">Nearby Signals</h2>
@@ -81,42 +23,26 @@
     </div>
 
     <script>
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-
-        function click(power) {
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.frequency.value = 800;
-            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.05);
-        }
-
         async function update() {
             try {
                 const res = await fetch('/get_data');
                 const data = await res.json();
                 const container = document.getElementById('container');
                 const header = document.getElementById('header');
-
+                
                 if (data.length === 1 && data[0].IsTarget) {
                     const item = data[0];
                     header.style.display = 'none';
                     let strength = Math.min(Math.max((parseInt(item.Power) + 100) * 1.4, 0), 100);
-
-                    if (strength > 70) click(item.Power);
-
+                    
                     container.innerHTML = `
                         <div class="target-mode">
-                            <div style="color:#00ff00">TRACKING: ${item.Name}</div>
+                            <div style="color:#0f0; font-weight:bold;">TRACKING: ${item.Name}</div>
                             <div class="dbm-display">${item.Power}</div>
                             <div class="bar-container">
                                 <div class="bar-fill" style="width: ${strength}%"></div>
                             </div>
-                            <div class="mac">${item.MAC}</div>
+                            <div class="mac">${item.MAC} (CH ${item.Channel})</div>
                             <button class="stop-btn" onclick="exitTarget()">STOP SCAN</button>
                         </div>
                     `;
@@ -126,7 +52,7 @@
                         <div class="device-row ${item.Power > -50 ? 'pwr-high' : ''}">
                             <div style="display:flex; justify-content:space-between; align-items:center;">
                                 <div>
-                                    <strong>${item.Name}</strong><br>
+                                    <div style="font-weight:bold">${item.Name}</div>
                                     <span class="mac">${item.MAC}</span>
                                 </div>
                                 <div style="text-align:right">
@@ -137,26 +63,19 @@
                         </div>
                     `).join('');
                 }
-            } catch (e) { }
+            } catch (e) {}
         }
 
         function startTarget(ch, mac) {
-            if (audioCtx.state === 'suspended') audioCtx.resume();
             fetch(`/start_target/${ch}/${mac}`);
         }
 
         function exitTarget() {
-            fetch('/stop_target')
-                .then(() => {
-                    // Give the hardware a second to restart before refreshing the UI
-                    setTimeout(() => {
-                        location.reload();
-                    }, 500);
-                });
+            fetch('/stop_target').then(() => setTimeout(() => location.reload(), 300));
         }
 
-        setInterval(update, 200);
+        setInterval(update, 800);
+        update();
     </script>
 </body>
-
 </html>
