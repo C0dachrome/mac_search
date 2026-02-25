@@ -9,6 +9,8 @@ sudo pkill chromium
 sudo airmon-ng check kill
 sudo airmon-ng start wlan1
 
+sudo rfkill unblock 2
+
 # wait for hardware
 sleep 2
 
