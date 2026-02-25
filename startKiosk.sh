@@ -32,4 +32,4 @@ sudo python3 macSearchAPI.py &
 sleep 5
 
 # launch chromium in kiosk mode
-chromium-browser --kiosk --noerrdialogs --disable-infobars http://localhost:5000
+chromium --kiosk --noerrdialogs --disable-infobars http://localhost:5000
