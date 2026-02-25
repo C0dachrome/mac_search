@@ -1,25 +1,100 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>Auditor</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        body { font-family: sans-serif; background: #000; color: #fff; padding: 10px; margin: 0; overflow-x: hidden; }
-        .device-row { background: #111; margin-bottom: 10px; padding: 15px; border-radius: 8px; border-left: 6px solid #444; }
-        .pwr-high { border-left-color: #00ff00; }
-        .target-mode { text-align: center; padding: 20px 5px; }
-        .bar-container { background: #222; height: 60px; border-radius: 30px; margin: 20px 0; overflow: hidden; border: 2px solid #444; }
-        .bar-fill { background: linear-gradient(to right, #f00, #ff0, #0f0); height: 100%; transition: width 0.2s; }
-        .dbm-display { font-size: 5rem; font-weight: bold; margin: 0; color: #007bff; }
-        button { background: #007bff; color: #fff; border: none; padding: 15px 25px; border-radius: 8px; font-weight: bold; font-size: 1rem; }
-        .stop-btn { background: #d00; width: 100%; margin-top: 20px; }
-        .mac { font-family: monospace; color: #666; font-size: 0.8rem; }
+        body {
+            font-family: sans-serif;
+            background: #000;
+            color: #fff;
+            padding: 10px;
+            margin: 0;
+            overflow-x: hidden;
+        }
+
+        .device-row {
+            background: #111;
+            margin-bottom: 10px;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 6px solid #444;
+        }
+
+        .pwr-high {
+            border-left-color: #00ff00;
+        }
+
+        .target-mode {
+            text-align: center;
+            padding: 20px 5px;
+        }
+
+        .bar-container {
+            background: #222;
+            height: 60px;
+            border-radius: 30px;
+            margin: 20px 0;
+            overflow: hidden;
+            border: 2px solid #444;
+        }
+
+        .bar-fill {
+            background: linear-gradient(to right, #f00, #ff0, #0f0);
+            height: 100%;
+            transition: width 0.2s;
+        }
+
+        .dbm-display {
+            font-size: 5rem;
+            font-weight: bold;
+            margin: 0;
+            color: #007bff;
+        }
+
+        button {
+            background: #007bff;
+            color: #fff;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 1rem;
+        }
+
+        .stop-btn {
+            background: #d00;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        .mac {
+            font-family: monospace;
+            color: #666;
+            font-size: 0.8rem;
+        }
+
+        .exit-btn {
+            background: #444;
+            color: #fff;
+            border: none;
+            padding: 10px;
+            border-radius: 5px;
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            opacity: 0.5;
+            font-size: 0.7rem;
+        }
     </style>
 </head>
+
 <body>
     <div id="app">
         <h2 id="header">Nearby Signals</h2>
         <div id="container"></div>
+        <button class="exit-btn" onclick="terminateApp()">EXIT APP</button>
     </div>
 
     <script>
@@ -29,12 +104,12 @@
                 const data = await res.json();
                 const container = document.getElementById('container');
                 const header = document.getElementById('header');
-                
+
                 if (data.length === 1 && data[0].IsTarget) {
                     const item = data[0];
                     header.style.display = 'none';
                     let strength = Math.min(Math.max((parseInt(item.Power) + 100) * 1.4, 0), 100);
-                    
+
                     container.innerHTML = `
                         <div class="target-mode">
                             <div style="color:#0f0; font-weight:bold;">TRACKING: ${item.Name}</div>
@@ -63,7 +138,7 @@
                         </div>
                     `).join('');
                 }
-            } catch (e) {}
+            } catch (e) { }
         }
 
         function startTarget(ch, mac) {
@@ -74,8 +149,16 @@
             fetch('/stop_target').then(() => setTimeout(() => location.reload(), 300));
         }
 
+        function terminateApp() {
+            if (confirm("close browser and stop auditor?")) {
+                fetch('/exit_kiosk').then(() => {
+                    window.close();
+                });
+            }
+        }
         setInterval(update, 800);
         update();
     </script>
 </body>
+
 </html>

@@ -108,5 +108,13 @@ async def health():
 async def startup():
     run_airodump()
 
+@app.route('/exit_kiosk')
+async def exit_kiosk():
+    # kill chromium and the python server
+    subprocess.Popen(["sudo", "pkill", "chromium"])
+    # optional: restart networking if you want internet back immediately
+    subprocess.Popen(["sudo", "systemctl", "start", "NetworkManager"])
+    return jsonify({"status": "exiting"})
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
