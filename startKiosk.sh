@@ -32,4 +32,4 @@ sudo python3 macSearchAPI.py &
 sleep 5
 
 # launch chromium with root bypass flags
-chromium-browser --kiosk --no-sandbox --user-data-dir=/root/chrome-profile --noerrdialogs --disable-infobars http://localhost:5000
+chromium --kiosk --no-sandbox --user-data-dir=/root/chrome-profile --noerrdialogs --disable-infobars http://localhost:5000
