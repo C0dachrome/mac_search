@@ -9,7 +9,7 @@ from quart_cors import cors
 app = Quart(__name__)
 app = cors(app, allow_origin="*")
 
-INTERFACE = 'wlan1mon'
+INTERFACE = 'wlan1'
 CSV_PREFIX = '/dev/shm/scan'
 TARGET_MAC = None
 
