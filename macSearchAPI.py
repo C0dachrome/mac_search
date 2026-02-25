@@ -19,7 +19,8 @@ def parse_csv():
         return []
     
     try:
-        with open(CSV_FILE, 'r') as f:
+        # 'rU' or newline='' helps handle files that are being written to
+        with open(CSV_FILE, 'r', newline='', errors='ignore') as f:
             content = f.read().split('\n\n')[0]
             lines = content.splitlines()
             if len(lines) < 2: return []
@@ -27,7 +28,6 @@ def parse_csv():
             reader = csv.DictReader(lines[1:])
             for row in reader:
                 data = {k.strip(): v.strip() for k, v in row.items()}
-                
                 if 'BSSID' in data and data['Power'] != '-1':
                     devices.append({
                         "MAC": data['BSSID'],
@@ -36,9 +36,18 @@ def parse_csv():
                         "Name": data['ESSID'] or "Unknown"
                     })
     except Exception as e:
-        print(f"Parse error: {e}")
-        
+        print(f"Read error: {e}")
     return devices
+
+# Add a check to ensure airodump hasn't died
+@app.route('/health')
+async def health():
+    # Check if airodump-ng is in the process list
+    check = subprocess.run(["pgrep", "airodump-ng"], capture_output=True)
+    if not check.stdout:
+        start_general_scan() # Restart it if it died
+        return jsonify({"status": "restarting"})
+    return jsonify({"status": "ok"})
 
 @app.route('/')
 async def index():
@@ -85,19 +94,14 @@ async def start_target(ch, mac):
     return jsonify({"status": "tracking", "mac": mac})
 
 def start_general_scan():
-
     subprocess.run(["sudo", "pkill", "airodump-ng"])
 
     cmd = [
-        "sudo",
-        "airodump-ng", 
-        INTERFACE, 
-        "-w", 
-        "/dev/shm/scan", 
-        "--output-format", 
-        "csv", 
-        "--write-interval", 
-        "1"
+        "sudo", "airodump-ng", INTERFACE, 
+        "-w", "/dev/shm/scan", 
+        "--output-format", "csv", 
+        "--write-interval", "1",
+        "--background" 
     ]
 
     subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
