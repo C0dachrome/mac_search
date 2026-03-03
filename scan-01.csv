@@ -1,0 +1,10 @@
+ CH  9 ][ Elapsed: 1 min ][ 2007-04-26 17:41 ][ WPA handshake: 00:14:6C:7E:40:80
+ 
+BSSID, First time seen, Last time seen, channel, Speed, Privacy, Cipher, Authentication, Power, # beacons, # IV, LAN IP, ID-length, ESSID, Key
+00:11:22:33:44:55, 2023-10-27 10:00:00, 2023-10-27 10:00:05, 6, 54, WPA2, CCMP, PSK, -30, 100, 0, 0.0.0.0, 11, SuperStrong, 
+66:77:88:99:AA:BB, 2023-10-27 10:00:01, 2023-10-27 10:00:06, 11, 54, WPA2, CCMP, PSK, -85, 50, 0, 0.0.0.0, 13, WeakSignal_1, 
+CC:DD:EE:FF:00:11, 2023-10-27 10:00:02, 2023-10-27 10:00:07, 1, 54, WPA2, CCMP, PSK, -45, 80, 0, 0.0.0.0, 9, MidRange, 
+AA:BB:CC:DD:EE:FF, 2023-10-27 10:00:03, 2023-10-27 10:00:08, 6, 54, WPA2, CCMP, PSK, -10, 200, 0, 0.0.0.0, 11, UltraClose, 
+22:33:44:55:66:77, 2023-10-27 10:00:04, 2023-10-27 10:00:09, 36, 54, WPA2, CCMP, PSK, -70, 40, 0, 0.0.0.0, 7, FarAway, 
+
+Station MAC, First time seen, Last time seen, Power, # packets, BSSID, Probed ESSIDs
