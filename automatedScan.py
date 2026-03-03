@@ -1,3 +1,8 @@
+#################################################################################
+#
+# automatedScan.py
+#
+#################################################################################
 import asyncio
 import csv
 import os
@@ -14,12 +19,22 @@ CSV_PREFIX = '/device/shm/scan'
 
 TARGET_MAC = None
 
+#################################################################################
+#
+# get_latest_csv() - returns the most recently created CSV file in the directory
+#
+#################################################################################
 def get_latest_csv():
     files = glob.glob(f"{CSV_PREFIX}-*.csv")
     if not files:
         return None
     return max(files, key=os.path.getmtime)
 
+#################################################################################
+#
+# parse_csv() - reads the latest CSV file and returns a list of dictionaries
+#  with device info
+#################################################################################
 def parse_csv(fake_scan):
 
     if not fake_scan:
@@ -61,6 +76,11 @@ def parse_csv(fake_scan):
         print(f"Exception when parsing csv: {e}")
         return []
 
+#################################################################################
+#
+# run_airodump(ch, bssid) - runs a scan on the target mac and channel if provided
+# otherwise runs a general scan 
+#################################################################################
 def run_airodump(ch=None, bssid=None):
     subprocess.run(["sudo", "pkill", "airodump-ng"])
     
@@ -80,6 +100,11 @@ def run_airodump(ch=None, bssid=None):
 
     subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
+#################################################################################
+#
+# run_scan(mac, ch) - runs a guided scan on the target mac and channel
+#
+#################################################################################
 def run_scan(mac, ch):
     measurements = [0,0,0,0]
     input("move to left corner, when youre there hit enter")
@@ -102,7 +127,11 @@ def run_scan(mac, ch):
 
     subprocess.run(["sudo", "pkill", "airodump-ng"])
 
-
+#################################################################################
+#
+# main function of the program
+#
+#################################################################################
 if __name__ == '__main__':
 
     top_5 = []
