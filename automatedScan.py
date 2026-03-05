@@ -1,8 +1,3 @@
-#################################################################################
-#
-# automatedScan.py
-#
-#################################################################################
 import asyncio
 import csv
 import os
@@ -11,6 +6,7 @@ import glob
 import time 
 import pandas as pd
 import io
+import datetime
 
 INTERFACE = 'wlan1'
 
@@ -96,7 +92,7 @@ def run_airodump(ch=None, bssid=None):
     ]
     
     if ch and bssid:
-        cmd.extend(["-c", ch, "--bssid", bssid])
+        cmd.extend(["-c", str(ch), "--bssid", bssid])
 
     subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
@@ -105,27 +101,72 @@ def run_airodump(ch=None, bssid=None):
 # run_scan(mac, ch) - runs a guided scan on the target mac and channel
 #
 #################################################################################
-def run_scan(mac, ch):
+def run_scan(mac, ch, name, fake_scan):
     measurements = [0,0,0,0]
-    input("move to left corner, when youre there hit enter")
-    
-    run_airodump(ch, mac)
-    time.sleep(2)
-    measurements[0] = parse_csv(False)[0]['Power']
-    time.sleep(2)
-    measurements[1] = parse_csv(False)[0]['Power']
-    time.sleep(2)
-    measurements[2] = parse_csv(False)[0]['Power']
-    time.sleep(2)
-    measurements[3]= parse_csv(False)[0]['Power']
-    
-    total = 0
-    for i in measurements:
-        total = total + i
 
-    top_left = total / 4
 
-    subprocess.run(["sudo", "pkill", "airodump-ng"])
+    #gets the datetime as a datetime object, then formats it as a string
+    current_datetime = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    #replaces spaces with underscores and colons with dashes to make it filename friendly
+    current_datetime = current_datetime.replace(" ", "_").replace(":", "-")
+
+    aud_num = input("auditorium number? ")
+    
+    #in case the file already exists, we append to it instead of creating a new one 
+    try:
+        file = open(f"measurements_th_{aud_num}.txt", "x")
+    except FileExistsError:
+        file = open(f"measurements_th_{aud_num}.txt", "w")
+        file.write(f"new scan yo\n")
+    file.write(f"Starting scan at {current_datetime}\n")
+
+
+    #all positions we want to scan at - we will prompt the user to move to each one before taking measurements
+    positions = ["top left", "top right", "middle left", "middle center (standing)", "middle center (seated)", "bottom left", "bottom right"]
+    
+    #iterate through each scan position, prompting the user to move there each time.
+    for scan_num in range(7):
+
+        input(f"Targeting {name}. Move to {positions[scan_num]}, then hit enter...")
+        if not fake_scan:
+            run_airodump(ch, mac)
+
+        for i in range(4):
+            time.sleep(2)
+            data = parse_csv(fake_scan)
+            
+            # Filter list to find the specific target MAC and Name
+            target_row = next((item for item in data if item["MAC"].lower() == mac.lower() and item["Name"] == name), None)
+            
+            if target_row:
+                measurements[i] = target_row['Power']
+                print(f"Reading {i+1}: {measurements[i]} dBm")
+            else:
+                print(f"Reading {i+1}: Target not found in this sample")
+                measurements[i] = 0
+
+        #determine the number of valid readings (non-zero) and calculate the total 
+        total = 0
+        valid_readings = 0
+        for j in measurements:
+            if j != 0:
+                total = total + j
+                valid_readings += 1
+
+        if valid_readings > 0:
+            #calculate the average of the valid readings and print it, also write it to the file
+            top_left = total / valid_readings
+            print(f"{positions[scan_num]} measurement (Avg of {valid_readings}): {top_left} dBm")
+            file.write(f"{positions[scan_num]} Measurement (Avg of {valid_readings}): {top_left} dBm\n")
+        else:
+            print("Could not get any valid readings for the target.")
+
+    print("Scan complete. Results saved to file.")
+    
+    if not testing:
+        print("killing airodump process...")
+        subprocess.run(["sudo", "pkill", "airodump-ng"])
 
 #################################################################################
 #
@@ -138,6 +179,7 @@ if __name__ == '__main__':
 
     testing = os.name == 'nt'
 
+
     try:
         #uncomment when running on correct device
         if not testing:
@@ -145,6 +187,7 @@ if __name__ == '__main__':
             run_airodump()
         else:
             fake_scan = True
+            print(testing)
             print("looks like youre on windows - using fake scan file")
             time.sleep(1)
 
@@ -168,12 +211,12 @@ if __name__ == '__main__':
                     #this prints the MAC, pwr, etc for each device by iterating using device variable.
                     #also, the formatting here uses < to left align and the number after for column width
                     print(f"{i:<3} | {device['MAC']:<20} | {device['Power']:<5} | {device['Channel']:<3} | {device['Name']}")
-
+            
             time.sleep(0.5)
 
     except KeyboardInterrupt:
 
-        print("Keyboard Interrupt. Continuing...")
+        print("\nKeyboard Interrupt. Continuing...")
 
 
         #another check to see if youre on windows, if not use sudo pkill to get rid of 
@@ -198,16 +241,12 @@ if __name__ == '__main__':
                 chosen_target = top_5[target-1]
                 target_mac = chosen_target['MAC']
                 target_ch = chosen_target['Channel']
+                target_name = chosen_target['Name']
                 running = False
             else: 
                 print("invalid option, try again")
                 running = True
         
-        print(f"you chose {target_mac} on channel {target_ch}")
+        print(f"you chose {target_mac} ({target_name}) on channel {target_ch}")
 
-        if not testing:
-            print("running guided scan")
-            run_scan(target_mac, target_ch)
-        
-        run_scan(target_mac, target_ch)
-
+        run_scan(target_mac, target_ch, target_name, fake_scan)
