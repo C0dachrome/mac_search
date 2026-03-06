@@ -242,11 +242,13 @@ if __name__ == '__main__':
                 target_mac = chosen_target['MAC']
                 target_ch = chosen_target['Channel']
                 target_name = chosen_target['Name']
+                if not target_name:
+                    target_name = chosen_target['MAC']
                 running = False
             else: 
                 print("invalid option, try again")
                 running = True
         
-        print(f"you chose {target_mac} ({target_name}) on channel {target_ch}")
+        print(f"you chose {target_mac} on channel {target_ch}")
 
         run_scan(target_mac, target_ch, target_name, fake_scan)
