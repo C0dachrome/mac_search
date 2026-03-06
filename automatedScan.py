@@ -31,14 +31,14 @@ def get_latest_csv():
 # parse_csv() - reads the latest CSV file and returns a list of dictionaries
 #  with device info
 #################################################################################
-def parse_csv(fake_scan):
+def parse_csv(testing):
 
-    if not fake_scan:
+    if not testing:
         current_file = get_latest_csv()
         if not current_file or not os.path.exists(current_file):
             return []
     else: 
-        current_file = "scan-01.csv"
+        current_file = "fake-01.csv"
         
     try:
         with open(current_file, 'r', newline='', errors='ignore') as f:
@@ -101,8 +101,8 @@ def run_airodump(ch=None, bssid=None):
 # run_scan(mac, ch) - runs a guided scan on the target mac and channel
 #
 #################################################################################
-def run_scan(mac, ch, name, fake_scan):
-    measurements = [0,0,0,0]
+def run_scan(mac, ch, name, testing):
+    measurements = [0,0,0,0,0]
 
 
     #gets the datetime as a datetime object, then formats it as a string
@@ -117,9 +117,11 @@ def run_scan(mac, ch, name, fake_scan):
     try:
         file = open(f"measurements_th_{aud_num}.txt", "x")
     except FileExistsError:
+        #for some reason, this deletes the file instead of appending to it. Not currently 
+        #an issue, but something to remember
         file = open(f"measurements_th_{aud_num}.txt", "w")
         file.write(f"new scan yo\n")
-    file.write(f"Starting scan at {current_datetime}\n")
+    file.write(f"Starting scan at {current_datetime}\nTheatre {aud_num}")
 
 
     #all positions we want to scan at - we will prompt the user to move to each one before taking measurements
@@ -128,13 +130,13 @@ def run_scan(mac, ch, name, fake_scan):
     #iterate through each scan position, prompting the user to move there each time.
     for scan_num in range(7):
 
-        input(f"Targeting {name}. Move to {positions[scan_num]}, then hit enter...")
-        if not fake_scan:
+        input(f"Targeting {mac}. Move to {positions[scan_num]}, then hit enter...")
+        if not testing:
             run_airodump(ch, mac)
 
-        for i in range(4):
+        for i in range(5):
             time.sleep(2)
-            data = parse_csv(fake_scan)
+            data = parse_csv(testing)
             
             # Filter list to find the specific target MAC and Name
             target_row = next((item for item in data if item["MAC"].lower() == mac.lower() and item["Name"] == name), None)
@@ -181,12 +183,9 @@ if __name__ == '__main__':
 
 
     try:
-        #uncomment when running on correct device
         if not testing:
-            fake_scan = False
             run_airodump()
         else:
-            fake_scan = True
             print(testing)
             print("looks like youre on windows - using fake scan file")
             time.sleep(1)
@@ -196,7 +195,7 @@ if __name__ == '__main__':
             #this uses "cls" if on windows and otherwise uses clear
             os.system('cls' if testing else 'clear')
 
-            all_devices = parse_csv(fake_scan)
+            all_devices = parse_csv(testing)
 
             if not all_devices:
                 print("scanning")
@@ -217,7 +216,6 @@ if __name__ == '__main__':
     except KeyboardInterrupt:
 
         print("\nKeyboard Interrupt. Continuing...")
-
 
         #another check to see if youre on windows, if not use sudo pkill to get rid of 
         #old airodump processes
@@ -251,4 +249,4 @@ if __name__ == '__main__':
         
         print(f"you chose {target_mac} on channel {target_ch}")
 
-        run_scan(target_mac, target_ch, target_name, fake_scan)
+        run_scan(target_mac, target_ch, target_name, testing)
