@@ -78,9 +78,11 @@ def parse_csv(testing):
 # otherwise runs a general scan 
 #################################################################################
 def run_airodump(ch=None, bssid=None):
-    subprocess.run(["sudo", "pkill", "airodump-ng"])
-    subprocess.run(["sudo", "rfkill", "unblock", "wlan"])
+
+    subprocess.run(["sudo", "pkill", "airodump-ng"], stderr=subprocess.DEVNULL)
+    subprocess.run(["sudo", "rfkill", "unblock", "wlan"], stderr=subprocess.DEVNULL)
     
+    # clean up old scan files
     for f in glob.glob(f"{CSV_PREFIX}*"):
         try: os.remove(f)
         except: pass
@@ -89,14 +91,21 @@ def run_airodump(ch=None, bssid=None):
         "sudo", "airodump-ng", INTERFACE,
         "-w", CSV_PREFIX,
         "--output-format", "csv",
-        "--write-interval", "1"
+        "--write-interval", "1",
+        "--background", "1"
     ]
     
     if ch and bssid:
         cmd.extend(["-c", str(ch), "--bssid", bssid])
 
-    #subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    subprocess.Popen(cmd)
+    # use Popen instead of run to avoid waiting for the process to finish, and redirect all output to DEVNULL to keep the terminal clean
+    subprocess.Popen(
+        cmd, 
+        stdout=subprocess.DEVNULL, 
+        stderr=subprocess.DEVNULL, 
+        stdin=subprocess.DEVNULL,
+        preexec_fn=os.setpgrp 
+    )
 
 #################################################################################
 #
