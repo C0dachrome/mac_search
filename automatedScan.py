@@ -10,7 +10,7 @@ import datetime
 
 INTERFACE = 'wlan1'
 
-CSV_PREFIX = '/device/shm/scan'
+CSV_PREFIX = '/dev/shm/scan'
 # CSV_PREFIX = 'scan' #version to run on windows laptop
 
 TARGET_MAC = None
@@ -94,7 +94,8 @@ def run_airodump(ch=None, bssid=None):
     if ch and bssid:
         cmd.extend(["-c", str(ch), "--bssid", bssid])
 
-    subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    #subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    subprocess.Popen(cmd)
 
 #################################################################################
 #
