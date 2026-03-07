@@ -79,6 +79,7 @@ def parse_csv(testing):
 #################################################################################
 def run_airodump(ch=None, bssid=None):
     subprocess.run(["sudo", "pkill", "airodump-ng"])
+    subprocess.run(["sudo", "rfkill", "unblock", "wlan"])
     
     for f in glob.glob(f"{CSV_PREFIX}*"):
         try: os.remove(f)
