@@ -7,6 +7,7 @@ import time
 import pandas as pd
 import io
 import datetime
+import re 
 
 INTERFACE = 'wlan1'
 
@@ -14,6 +15,18 @@ CSV_PREFIX = '/dev/shm/scan'
 # CSV_PREFIX = 'scan' #version to run on windows laptop
 
 TARGET_MAC = None
+
+#################################################################################
+#
+# get_clean_input() - gets input and removes any non-printable/control characters
+#
+#################################################################################
+def get_clean_input(prompt):
+    raw_data = input(prompt)
+    # This regex removes any non-printable/control characters
+    # It keeps only alphanumeric characters and standard punctuation
+    clean_data = re.sub(r'[^\x20-\x7E]', '', raw_data)
+    return clean_data.strip()
 
 #################################################################################
 #
@@ -122,7 +135,7 @@ def run_scan(mac, ch, name, testing):
     #replaces spaces with underscores and colons with dashes to make it filename friendly
     current_datetime = current_datetime.replace(" ", "_").replace(":", "-")
 
-    aud_num = input("auditorium number? ")
+    aud_num = get_clean_input("auditorium number? ")
     
     #in case the file already exists, we append to it instead of creating a new one 
     try:
@@ -132,7 +145,7 @@ def run_scan(mac, ch, name, testing):
         #an issue, but something to remember
         file = open(f"measurements_th_{aud_num}.txt", "w")
         file.write(f"new scan yo\n")
-    file.write(f"Starting scan at {current_datetime}\nTheatre {aud_num}")
+    file.write(f"Starting scan at {current_datetime}\nTheatre {aud_num}\n")
 
 
     #all positions we want to scan at - we will prompt the user to move to each one before taking measurements
